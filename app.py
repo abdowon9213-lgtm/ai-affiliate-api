@@ -1,42 +1,30 @@
-import os
-from fastapi import FastAPI, Request
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
-from slowapi.errors import RateLimitExceeded
+from fastapi import FastAPI
 from openai import OpenAI
+import os
 
-limiter = Limiter(key_func=get_remote_address)
+app = FastAPI()
 
-app = FastAPI(title="Fail-Closed AI Affiliate Marketing API", version="3.5.0")
-app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+# تهيئة العميل ليتصل بـ Groq بدلاً من OpenAI باستخدام نفس المكتبة
+client = OpenAI(
+    api_key=os.environ.get("GROQ_API_KEY"),
+    base_url="https://api.groq.com/openai/v1"
+)
 
-openai_api_key = os.getenv("OPENAI_API_KEY")
-if not openai_api_key:
-    raise ValueError("CRITICAL: OPENAI_API_KEY environment variable is missing!")
-
-client = OpenAI(api_key=openai_api_key)
+@app.post("/api/v1/generate-ads")
+def generate_ads():
+    try:
+        response = client.chat.completions.create(
+            model="llama-3.1-8b-instant",  # نموذج سريع ومجاني ممتاز
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant for affiliate marketing."},
+                {"role": "user", "content": "Generate a catchy affiliate marketing ad."}
+            ]
+        )
+        return {"success": True, "ad": response.choices[0].message.content}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
 
 @app.get("/")
 def read_root():
-    return {"status": "online", "mode": "Fail-Closed AI Affiliate API"}
-
-@app.post("/api/v1/generate-ads")
-@limiter.limit("5/minute")
-async def generate_ads(request: Request):
-    try:
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role": "user", "content": "Generate an affiliate marketing headline for a smartphone."}],
-            max_tokens=50
-        )
-        return {
-            "success": True,
-            "headline": response.choices[0].message.content
-        }
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
+    return {"message": "AI Affiliate Marketing API is running successfully with Groq!"}
+                

@@ -27,3 +27,11 @@ def generate_ads():
 def read_root():
     return {"message": "AI Affiliate Marketing API is running successfully with Groq!"}
     
+@app.get("/models")
+def list_models():
+    try:
+        models = client.models.list()
+        return {"models": [model.id for model in models.data]}
+    except Exception as e:
+        return {"error": str(e)}
+    

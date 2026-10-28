@@ -4,7 +4,6 @@ import os
 
 app = FastAPI()
 
-# تهيئة العميل ليتصل بـ Groq بدلاً من OpenAI باستخدام نفس المكتبة
 client = OpenAI(
     api_key=os.environ.get("GROQ_API_KEY"),
     base_url="https://api.groq.com/openai/v1"
@@ -14,7 +13,7 @@ client = OpenAI(
 def generate_ads():
     try:
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",  # نموذج سريع ومجاني ممتاز
+            model="llama-3.1-8b-instant",
             messages=[
                 {"role": "system", "content": "You are a helpful assistant for affiliate marketing."},
                 {"role": "user", "content": "Generate a catchy affiliate marketing ad."}
@@ -27,4 +26,4 @@ def generate_ads():
 @app.get("/")
 def read_root():
     return {"message": "AI Affiliate Marketing API is running successfully with Groq!"}
-                
+    

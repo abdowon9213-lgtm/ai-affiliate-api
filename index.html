@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مولّد الإعلانات الذكي</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; margin: 0; padding: 15px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 600px; background: #ffffff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #333; margin-top: 0; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: bold; color: #444; }
+        input[type="text"], textarea, select { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; }
+        textarea { resize: vertical; min-height: 80px; }
+        button.btn-submit { width: 100%; background-color: #007bff; color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; }
+        button.btn-submit:hover { background-color: #0056b3; }
+        .result-box { margin-top: 20px; display: none; background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; position: relative; }
+        .result-text { white-space: pre-wrap; word-break: break-word; color: #212529; font-size: 15px; line-height: 1.6; margin-top: 25px; }
+        .btn-copy { position: absolute; top: 10px; left: 10px; background-color: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .btn-copy:hover { background-color: #218838; }
+        .loading { text-align: center; color: #007bff; font-weight: bold; display: none; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>مولّد الإعلانات الذكي 🚀</h2>
+    
+    <form id="adForm">
+        <div class="form-group">
+            <label for="product_name">اسم المنتج / الخدمة:</label>
+            <input type="text" id="product_name" placeholder="مثال: ساعة ذكية رياضية" required>
+        </div>
+
+        <div class="form-group">
+            <label for="features">مميزات المنتج الأساسية:</label>
+            <textarea id="features" placeholder="أدخل المميزات المحددة فقط (مثال: دقة 4K، ضمان سنتين، توصيل مجاني)" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="target_audience">الجمهور المستهدف:</label>
+            <input type="text" id="target_audience" placeholder="مثال: عشاق الأفلام والألعاب في ليبيا" required>
+        </div>
+
+        <div class="form-group">
+            <label for="language">لغة / لهجة الإعلان:</label>
+            <select id="language">
+                <option value="ar_ly">اللهجة الليبية</option>
+                <option value="ar_msa">العربية الفصحى</option>
+                <option value="en">الإنجليزية (English)</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-submit">توليد الإعلان</button>
+    </form>
+
+    <div class="loading" id="loadingText">جاري كتابة الإعلان... ⏳</div>
+
+    <div class="result-box" id="resultBox">
+        <button class="btn-copy" onclick="copyAd()">نسخ الإعلان 📋</button>
+        <div class="result-text" id="adOutput"></div>
+    </div>
+</div>
+
+<script>
+document.getElementById('adForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const loadingText = document.getElementById('loadingText');
+    const resultBox = document.getElementById('resultBox');
+    const adOutput = document.getElementById('adOutput');
+    
+    loadingText.style.display = 'block';
+    resultBox.style.display = 'none';
+
+    const payload = {
+        product_name: document.getElementById('product_name').value,
+        features: document.getElementById('features').value,
+        target_audience: document.getElementById('target_audience').value,
+        language: document.getElementById('language').value
+    };
+
+    try {
+        const response = await fetch('/api/v1/generate-ads', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            adOutput.textContent = data.ad;
+            resultBox.style.display = 'block';
+        } else {
+            alert('حدث خطأ: ' + (data.error || 'تعذر توليد الإعلان'));
+        }
+    } catch (err) {
+        alert('تعذر الاتصال بالسيرفر');
+    } finally {
+        loadingText.style.display = 'none';
+    }
+});
+
+function copyAd() {
+    const text = document.getElementById('adOutput').textContent;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('تم نسخ الإعلان إلى الحافظة بنجاح! 📋');
+    });
+}
+</script>
+
+</body>
+              </html>
+  

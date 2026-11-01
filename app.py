@@ -24,10 +24,14 @@ class AdRequest(BaseModel):
     target_audience: str = Field(..., min_length=1)
     language: str = Field(...)
 
-LANG_INSTRUCTIONS = {
+    LANG_INSTRUCTIONS = {
     "ar_msa": "Modern Standard Arabic.",
     "ar_ly": "Natural Libyan Arabic dialect.",
+    "ar_sa": "Natural Saudi Arabic dialect (engaging, popular, and tailored for Saudi consumers).",
     "en": "English."
+}
+
+    
 }
 
 @app.get("/", response_class=HTMLResponse)

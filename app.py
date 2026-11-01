@@ -6,11 +6,9 @@ from openai import OpenAI
 
 app = FastAPI(title="AI Affiliate Marketing API")
 
-# قراءة الإعدادات من Render
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 GROQ_MODEL = os.environ.get("GROQ_MODEL")
 
-# لا نستخدم مفتاحًا وهميًا
 client = None
 if GROQ_API_KEY:
     client = OpenAI(
@@ -24,14 +22,11 @@ class AdRequest(BaseModel):
     target_audience: str = Field(..., min_length=1)
     language: str = Field(...)
 
-    LANG_INSTRUCTIONS = {
+LANG_INSTRUCTIONS = {
     "ar_msa": "Modern Standard Arabic.",
     "ar_ly": "Natural Libyan Arabic dialect.",
-    "ar_sa": "Natural Saudi Arabic dialect (engaging, popular, and tailored for Saudi consumers).",
+    "ar_sa": "Natural Saudi Arabic dialect.",
     "en": "English."
-}
-
-    
 }
 
 @app.get("/", response_class=HTMLResponse)
@@ -68,7 +63,7 @@ def generate_ads(payload: AdRequest):
     if not lang_instruction:
         raise HTTPException(
             status_code=422,
-            detail="Unsupported language. Use ar_ly, ar_msa, or en."
+            detail="Unsupported language. Use ar_ly, ar_sa, ar_msa, or en."
         )
 
     system_prompt = (
@@ -141,4 +136,5 @@ def list_models():
         raise HTTPException(
             status_code=502,
             detail="Could not retrieve models from Groq"
-        )
+)
+        

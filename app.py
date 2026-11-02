@@ -1,146 +1,126 @@
 import os
 import json
-import logging
-
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from openai import OpenAI
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("affiliate-app")
-
-app = FastAPI(
-    title="Saudi Affiliate Generator",
-    version="2.0.0"
-)
+app = FastAPI(title="المسوق الذكي 2.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-GROQ_MODEL = os.getenv(
-    "GROQ_MODEL",
-    "llama-3.3-70b-versatile"
-)
-
-client = OpenAI(
-    api_key=GROQ_API_KEY or "missing-key",
-    base_url="https://api.groq.com/openai/v1"
-)
-
-
 class GenerateRequest(BaseModel):
-    product_name: str = Field(min_length=2, max_length=160)
-    features: str = Field(min_length=5, max_length=1200)
-    target_audience: str = "المتسوقون في السعودية"
-    product_url: str | None = None
-    affiliate_url: str = Field(min_length=8, max_length=2000)
-    extra_notes: str | None = None
-
+    product_name: str
+    features: str
+    target_audience: str = ""
+    product_url: str = ""
+    affiliate_url: str
+    extra_notes: str = ""
 
 @app.get("/")
 def home():
     return FileResponse("index.html")
 
-
 @app.get("/health")
 def health():
-    return {"status": "ok", "version": "2.0.0"}
-
+    return {"status": "ok"}
 
 @app.post("/api/v1/generate-ads")
-def generate_ads(payload: GenerateRequest):
+def generate_ads(data: GenerateRequest):
+    api_key = os.getenv("GROQ_API_KEY")
 
-    if not GROQ_API_KEY:
+    if not api_key:
         raise HTTPException(
-            status_code=503,
-            detail="إعداد مفتاح Groq غير مكتمل في Render."
+            status_code=500,
+            detail="إعداد مفتاح الخدمة غير مكتمل في Render."
         )
 
-    disclosure = (
-        "إعلان بعمولة: قد أحصل على عمولة عند "
-        "الشراء عبر هذا الرابط، دون تكلفة إضافية عليك."
+    client = OpenAI(
+        api_key=api_key,
+        base_url="https://api.groq.com/openai/v1"
     )
 
     prompt = f"""
-اكتب 3 إعلانات مختلفة باللهجة السعودية.
+أنت كاتب إعلانات تسويقية محترف متخصص في السوق السعودي.
 
-اسم المنتج: {payload.product_name}
-المميزات: {payload.features}
-الجمهور: {payload.target_audience}
-ملاحظات: {payload.extra_notes or "لا توجد"}
+اكتب ثلاثة إعلانات مختلفة للمنتج التالي:
 
-التعليمات:
-- استخدم اللهجة السعودية الطبيعية.
-- لا تخترع أسعاراً أو خصومات أو تقييمات.
-- لا تضف معلومات غير موجودة.
-- اجعل الإعلانات مناسبة لفيسبوك.
-- لا تضع الرابط داخل نص الإعلان.
-- أعد JSON فقط بهذا الشكل:
+اسم المنتج: {data.product_name}
+مميزات المنتج: {data.features}
+الجمهور المستهدف: {data.target_audience}
+ملاحظات إضافية: {data.extra_notes}
 
+قواعد إلزامية:
+1. اكتب بالعربية فقط وبلهجة سعودية طبيعية ومفهومة.
+2. ممنوع إدخال أي كلمات إنجليزية أو فرنسية.
+3. ممنوع الأخطاء الإملائية والعبارات الركيكة.
+4. لا تخترع مواصفات أو فوائد غير موجودة في بيانات المنتج.
+5. لا تبالغ ولا تقدم وعوداً غير مثبتة.
+6. اجعل كل إعلان مختلفاً في الأسلوب والعنوان.
+7. أضف مجموعة هاشتاقات عربية مناسبة لكل إعلان.
+8. أضف إفصاح العمولة بالنص التالي:
+"إعلان بعمولة: قد أحصل على عمولة عند الشراء عبر هذا الرابط، دون تكلفة إضافية عليك."
+9. أضف رابط العمولة كما هو دون تغييره:
+{data.affiliate_url}
+10. أعد النتيجة بصيغة JSON صحيحة فقط، دون Markdown.
+
+استخدم هذا الشكل:
 {{
   "variants": [
-    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}},
-    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}},
-    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}}
+    {{"title": "عنوان الإعلان", "content": "نص الإعلان", "hashtags": "الهاشتاقات"}},
+    {{"title": "عنوان الإعلان", "content": "نص الإعلان", "hashtags": "الهاشتاقات"}},
+    {{"title": "عنوان الإعلان", "content": "نص الإعلان", "hashtags": "الهاشتاقات"}}
   ]
 }}
 """
 
     try:
-        result = client.chat.completions.create(
-            model=GROQ_MODEL,
-            temperature=0.7,
-            max_tokens=1400,
-            response_format={"type": "json_object"},
+        response = client.chat.completions.create(
+            model="llama-3.3-70b-versatile",
             messages=[
                 {
                     "role": "system",
-                    "content": (
-                        "أنت كاتب إعلانات متخصص باللهجة السعودية. "
-                        "التزم بالمعلومات المقدمة فقط."
-                    )
+                    "content": "أنت كاتب إعلانات سعودي دقيق. التزم بالعربية السليمة واللهجة السعودية الطبيعية."
                 },
-                {
-                    "role": "user",
-                    "content": prompt
-                }
-            ]
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5,
+            response_format={"type": "json_object"}
         )
 
-        content = result.choices[0].message.content
-        data = json.loads(content or "{}")
-        variants = data.get("variants", [])
+        result = json.loads(response.choices[0].message.content)
+
+        variants = result.get("variants", [])
 
         if len(variants) != 3:
-            raise ValueError("Invalid response")
+            raise ValueError("عدد الإعلانات غير صحيح")
 
-        for item in variants:
-            if not all(
-                key in item
-                for key in ["title", "copy", "hashtags"]
-            ):
-                raise ValueError("Missing fields")
+        for ad in variants:
+            ad["affiliate_url"] = data.affiliate_url
+            ad["disclosure"] = (
+                "إعلان بعمولة: قد أحصل على عمولة عند الشراء عبر هذا الرابط، "
+                "دون تكلفة إضافية عليك."
+            )
+
+        return {
+            "success": True,
+            "country": "السعودية",
+            "dialect": "السعودية",
+            "disclosure": "إعلان بعمولة",
+            "affiliate_url": data.affiliate_url,
+            "variants": variants
+        }
 
     except Exception:
-        logger.exception("Groq generation failed")
         raise HTTPException(
             status_code=502,
             detail="تعذر إنشاء الإعلانات حالياً. حاول مرة أخرى."
         )
-
-    return {
-        "success": True,
-        "country": "السعودية",
-        "dialect": "اللهجة السعودية",
-        "disclosure": disclosure,
-        "affiliate_url": payload.affiliate_url,
-        "variants": variants
-}
+         

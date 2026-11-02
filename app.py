@@ -1,140 +1,146 @@
 import os
+import json
+import logging
+
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from openai import OpenAI
 
-app = FastAPI(title="AI Affiliate Marketing API")
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("affiliate-app")
 
-GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
-GROQ_MODEL = os.environ.get("GROQ_MODEL")
+app = FastAPI(
+    title="Saudi Affiliate Generator",
+    version="2.0.0"
+)
 
-client = None
-if GROQ_API_KEY:
-    client = OpenAI(
-        api_key=GROQ_API_KEY,
-        base_url="https://api.groq.com/openai/v1"
-    )
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS"],
+    allow_headers=["*"],
+)
 
-class AdRequest(BaseModel):
-    product_name: str = Field(..., min_length=1)
-    features: str = Field(..., min_length=1)
-    target_audience: str = Field(..., min_length=1)
-    language: str = Field(...)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+GROQ_MODEL = os.getenv(
+    "GROQ_MODEL",
+    "llama-3.3-70b-versatile"
+)
 
-LANG_INSTRUCTIONS = {
-    "ar_msa": "Modern Standard Arabic.",
-    "ar_ly": "Natural Libyan Arabic dialect.",
-    "ar_sa": "Natural Saudi Arabic dialect.",
-    "en": "English."
-}
+client = OpenAI(
+    api_key=GROQ_API_KEY or "missing-key",
+    base_url="https://api.groq.com/openai/v1"
+)
 
-@app.get("/", response_class=HTMLResponse)
-def read_root():
-    base_dir = os.path.dirname(os.path.abspath(__file__))
-    file_path = os.path.join(base_dir, "index.html")
 
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            return f.read()
-    except FileNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="index.html not found"
-        )
+class GenerateRequest(BaseModel):
+    product_name: str = Field(min_length=2, max_length=160)
+    features: str = Field(min_length=5, max_length=1200)
+    target_audience: str = "المتسوقون في السعودية"
+    product_url: str | None = None
+    affiliate_url: str = Field(min_length=8, max_length=2000)
+    extra_notes: str | None = None
+
+
+@app.get("/")
+def home():
+    return FileResponse("index.html")
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "version": "2.0.0"}
+
 
 @app.post("/api/v1/generate-ads")
-def generate_ads(payload: AdRequest):
+def generate_ads(payload: GenerateRequest):
 
-    if not GROQ_API_KEY or client is None:
+    if not GROQ_API_KEY:
         raise HTTPException(
             status_code=503,
-            detail="GROQ_API_KEY is not configured on Render"
+            detail="إعداد مفتاح Groq غير مكتمل في Render."
         )
 
-    if not GROQ_MODEL:
-        raise HTTPException(
-            status_code=503,
-            detail="GROQ_MODEL is not configured on Render"
-        )
-
-    lang_instruction = LANG_INSTRUCTIONS.get(payload.language)
-
-    if not lang_instruction:
-        raise HTTPException(
-            status_code=422,
-            detail="Unsupported language. Use ar_ly, ar_sa, ar_msa, or en."
-        )
-
-    system_prompt = (
-        "You are a professional marketing copywriter.\n"
-        "Use only the product information provided. "
-        "Never invent specifications, prices, discounts, guarantees, "
-        "or results.\n"
-        f"Write exclusively in: {lang_instruction}\n"
-        "Create a persuasive, clear advertisement for the target audience."
+    disclosure = (
+        "إعلان بعمولة: قد أحصل على عمولة عند "
+        "الشراء عبر هذا الرابط، دون تكلفة إضافية عليك."
     )
 
-    user_content = (
-        f"Product: {payload.product_name}\n"
-        f"Features: {payload.features}\n"
-        f"Target audience: {payload.target_audience}"
-    )
+    prompt = f"""
+اكتب 3 إعلانات مختلفة باللهجة السعودية.
+
+اسم المنتج: {payload.product_name}
+المميزات: {payload.features}
+الجمهور: {payload.target_audience}
+ملاحظات: {payload.extra_notes or "لا توجد"}
+
+التعليمات:
+- استخدم اللهجة السعودية الطبيعية.
+- لا تخترع أسعاراً أو خصومات أو تقييمات.
+- لا تضف معلومات غير موجودة.
+- اجعل الإعلانات مناسبة لفيسبوك.
+- لا تضع الرابط داخل نص الإعلان.
+- أعد JSON فقط بهذا الشكل:
+
+{{
+  "variants": [
+    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}},
+    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}},
+    {{"title":"عنوان","copy":"نص الإعلان","hashtags":["وسم1","وسم2"]}}
+  ]
+}}
+"""
 
     try:
-        response = client.chat.completions.create(
+        result = client.chat.completions.create(
             model=GROQ_MODEL,
+            temperature=0.7,
+            max_tokens=1400,
+            response_format={"type": "json_object"},
             messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_content}
-            ],
-            temperature=0.4,
-            max_tokens=600
+                {
+                    "role": "system",
+                    "content": (
+                        "أنت كاتب إعلانات متخصص باللهجة السعودية. "
+                        "التزم بالمعلومات المقدمة فقط."
+                    )
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
         )
 
-        ad = response.choices[0].message.content
+        content = result.choices[0].message.content
+        data = json.loads(content or "{}")
+        variants = data.get("variants", [])
 
-        if not ad:
-            raise HTTPException(
-                status_code=502,
-                detail="The AI model returned an empty response"
-            )
+        if len(variants) != 3:
+            raise ValueError("Invalid response")
 
-        return {"success": True, "ad": ad}
-
-    except HTTPException:
-        raise
+        for item in variants:
+            if not all(
+                key in item
+                for key in ["title", "copy", "hashtags"]
+            ):
+                raise ValueError("Missing fields")
 
     except Exception:
-        import logging
-        logging.exception("Groq advertisement generation failed")
-
+        logger.exception("Groq generation failed")
         raise HTTPException(
             status_code=502,
-            detail="تعذر توليد الإعلان من خدمة الذكاء الاصطناعي. راجع Render Logs."
+            detail="تعذر إنشاء الإعلانات حالياً. حاول مرة أخرى."
         )
 
-@app.get("/models")
-def list_models():
-
-    if client is None:
-        raise HTTPException(
-            status_code=503,
-            detail="GROQ_API_KEY is not configured"
-        )
-
-    try:
-        models = client.models.list()
-        return {
-            "models": [model.id for model in models.data]
-        }
-
-    except Exception:
-        import logging
-        logging.exception("Failed to retrieve Groq models")
-
-        raise HTTPException(
-            status_code=502,
-            detail="Could not retrieve models from Groq"
-)
-        
+    return {
+        "success": True,
+        "country": "السعودية",
+        "dialect": "اللهجة السعودية",
+        "disclosure": disclosure,
+        "affiliate_url": payload.affiliate_url,
+        "variants": variants
+}

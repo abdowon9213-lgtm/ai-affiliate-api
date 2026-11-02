@@ -1,208 +1,272 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>المسوق الذكي - السعودية</title>
-<style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f7f4;
-  margin: 0;
-  padding: 18px;
-  color: #222;
-}
-main {
-  max-width: 700px;
-  margin: auto;
-}
-header {
-  background: #14532d;
-  color: white;
-  padding: 22px;
-  border-radius: 14px;
-  text-align: center;
-}
-.panel {
-  background: white;
-  padding: 18px;
-  margin-top: 18px;
-  border-radius: 14px;
-}
-label {
-  display: block;
-  font-weight: bold;
-  margin-top: 14px;
-}
-input, textarea {
-  width: 100%;
-  padding: 12px;
-  margin-top: 6px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  font-size: 16px;
-}
-textarea { min-height: 100px; }
-button {
-  background: #166534;
-  color: white;
-  border: 0;
-  padding: 13px;
-  border-radius: 9px;
-  margin-top: 15px;
-  width: 100%;
-  font-size: 16px;
-  cursor: pointer;
-}
-.result {
-  background: #f8faf8;
-  padding: 14px;
-  margin-top: 15px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-}
-.copy {
-  background: #e8f0e9;
-}
-.status { margin-top: 12px; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>المسوق الذكي 2.0</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: Tahoma, Arial, sans-serif;
+      background: #f3f5f9;
+      color: #222;
+    }
+    .container {
+      max-width: 760px;
+      margin: auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    h1 { color: #176b50; }
+    .panel, .ad-card {
+      background: white;
+      padding: 20px;
+      border-radius: 14px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px #0000000d;
+    }
+    label {
+      display: block;
+      font-weight: bold;
+      margin: 15px 0 7px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #d5dbe3;
+      border-radius: 8px;
+      font: inherit;
+    }
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+    button {
+      background: #176b50;
+      color: white;
+      border: 0;
+      padding: 13px 18px;
+      border-radius: 8px;
+      font: inherit;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .6; }
+    .generate {
+      width: 100%;
+      margin-top: 20px;
+    }
+    .ad-card h3 { color: #176b50; }
+    .ad-text {
+      white-space: pre-wrap;
+      line-height: 1.9;
+    }
+    .hashtags {
+      color: #176b50;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+    .link {
+      display: block;
+      direction: ltr;
+      text-align: left;
+      overflow-wrap: anywhere;
+      margin: 12px 0;
+    }
+    .message {
+      margin: 15px 0;
+      text-align: center;
+      font-weight: bold;
+    }
+    .error { color: #b42318; }
+    .disclosure {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.7;
+    }
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+  </style>
 </head>
-
 <body>
-<main>
-<header>
-<h2>المسوق الذكي 2.0</h2>
-<p>إنشاء إعلانات تسويقية باللهجة السعودية</p>
-</header>
+<div class="container">
 
-<section class="panel">
-<h3>بيانات المنتج</h3>
+  <header>
+    <h1>المسوق الذكي 2.0</h1>
+    <p>إنشاء إعلانات تسويقية باللهجة السعودية</p>
+  </header>
 
-<label>اسم المنتج</label>
-<input id="product" placeholder="اكتب اسم المنتج">
+  <section class="panel">
+    <h2>بيانات المنتج</h2>
 
-<label>مميزات المنتج</label>
-<textarea id="features" placeholder="اكتب مميزات المنتج"></textarea>
+    <label for="product">اسم المنتج *</label>
+    <input id="product" placeholder="مثال: ساعة بلوتوث">
 
-<label>الجمهور المستهدف</label>
-<input id="audience" value="المتسوقون في السعودية">
+    <label for="features">مميزات المنتج *</label>
+    <textarea id="features" placeholder="اكتب مميزات المنتج"></textarea>
 
-<label>رابط المنتج</label>
-<input id="productUrl" placeholder="رابط صفحة المنتج">
+    <label for="audience">الجمهور المستهدف</label>
+    <input id="audience" placeholder="مثال: محبو التقنية">
 
-<label>رابط العمولة</label>
-<input id="affiliateUrl" placeholder="الصق رابط العمولة">
+    <label for="productUrl">رابط المنتج</label>
+    <input id="productUrl" type="url" placeholder="رابط صفحة المنتج">
 
-<label>ملاحظات إضافية</label>
-<input id="notes" placeholder="ملاحظات اختيارية">
+    <label for="affiliateUrl">رابط العمولة *</label>
+    <input id="affiliateUrl" type="url" placeholder="رابط Amazon Associates">
 
-<button id="generate" onclick="generate()">إنشاء 3 إعلانات سعودية</button>
-<p id="status" class="status"></p>
-</section>
+    <label for="notes">ملاحظات إضافية</label>
+    <textarea id="notes" placeholder="أي تفاصيل إضافية"></textarea>
 
-<section class="panel" id="results" hidden>
-<h3>الإعلانات المقترحة</h3>
-<p id="disclosure"></p>
-<div id="variants"></div>
-</section>
-</main>
+    <button class="generate" id="generate" onclick="generateAds()">
+      إنشاء 3 إعلانات سعودية
+    </button>
+
+    <div id="message" class="message"></div>
+  </section>
+
+  <section id="results"></section>
+
+</div>
 
 <script>
-async function generate() {
+async function generateAds() {
   const product_name = document.getElementById("product").value.trim();
   const features = document.getElementById("features").value.trim();
-  const target_audience = document.getElementById("audience").value.trim();
-  const product_url = document.getElementById("productUrl").value.trim() || null;
   const affiliate_url = document.getElementById("affiliateUrl").value.trim();
-  const extra_notes = document.getElementById("notes").value.trim() || null;
-  const status = document.getElementById("status");
-  const button = document.getElementById("generate");
 
   if (!product_name || !features || !affiliate_url) {
-    status.textContent = "أدخل اسم المنتج ومميزاته ورابط العمولة.";
+    showMessage("فضلاً أدخل اسم المنتج ومميزاته ورابط العمولة.", true);
     return;
   }
 
-  try {
-    new URL(affiliate_url);
-    if (product_url) new URL(product_url);
-  } catch {
-    status.textContent = "تأكد من صحة الروابط.";
-    return;
-  }
+  const button = document.getElementById("generate");
+  const results = document.getElementById("results");
 
   button.disabled = true;
-  status.textContent = "جارٍ إنشاء الإعلانات...";
+  button.textContent = "جاري إنشاء الإعلانات...";
+  results.innerHTML = "";
+  showMessage("انتظر قليلاً، يتم تجهيز إعلاناتك.");
+
+  const payload = {
+    product_name,
+    features,
+    target_audience: document.getElementById("audience").value.trim(),
+    product_url: document.getElementById("productUrl").value.trim(),
+    affiliate_url,
+    extra_notes: document.getElementById("notes").value.trim()
+  };
 
   try {
     const response = await fetch("/api/v1/generate-ads", {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        product_name,
-        features,
-        target_audience,
-        product_url,
-        affiliate_url,
-        extra_notes
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.detail || "حدث خطأ.");
 
-    document.getElementById("disclosure").textContent = data.disclosure;
-    const container = document.getElementById("variants");
-    container.innerHTML = "";
+    if (!response.ok) {
+      throw new Error(
+        typeof data.detail === "string"
+          ? data.detail
+          : "تعذر إنشاء الإعلانات."
+      );
+    }
 
-    data.variants.forEach((item, index) => {
-      const article = document.createElement("div");
-      article.className = "result";
+    const variants = Array.isArray(data.variants) ? data.variants : [];
 
-      const title = document.createElement("h3");
-      title.textContent = (index + 1) + ". " + item.title;
+    if (variants.length === 0) {
+      throw new Error("لم تصل إعلانات من الخادم.");
+    }
 
-      const copy = document.createElement("p");
-      copy.textContent = item.copy;
+    variants.forEach((ad, index) => {
+      if (typeof ad === "string") {
+        try { ad = JSON.parse(ad); }
+        catch { ad = { content: ad }; }
+      }
+
+      if (!ad || typeof ad !== "object") {
+        ad = { content: String(ad) };
+      }
+
+      const title = ad.title || `الإعلان ${index + 1}`;
+      const content = ad.content || ad.text || "";
+      const hashtags = ad.hashtags || "";
+      const disclosure = ad.disclosure || data.disclosure || "";
+      const url = ad.affiliate_url || data.affiliate_url || affiliate_url;
+
+      const card = document.createElement("article");
+      card.className = "ad-card";
+
+      const heading = document.createElement("h3");
+      heading.textContent = title;
+
+      const paragraph = document.createElement("p");
+      paragraph.className = "ad-text";
+      paragraph.textContent = content;
 
       const tags = document.createElement("p");
-      tags.textContent = (item.hashtags || []).join(" ");
+      tags.className = "hashtags";
+      tags.textContent = typeof hashtags === "string"
+        ? hashtags
+        : Array.isArray(hashtags) ? hashtags.join(" ") : "";
 
-      const link = document.createElement("p");
-      link.textContent = "رابط العمولة: " + data.affiliate_url;
+      const disclosureText = document.createElement("p");
+      disclosureText.className = "disclosure";
+      disclosureText.textContent = disclosure;
 
-      const button = document.createElement("button");
-      button.className = "copy";
-      button.textContent = "نسخ الإعلان مع الرابط والإفصاح";
-      button.onclick = async () => {
-        const fullText =
-          item.title + "\n\n" +
-          item.copy + "\n\n" +
-          tags.textContent + "\n\n" +
-          data.disclosure + "\n\n" +
-          "رابط الشراء: " + data.affiliate_url;
+      const link = document.createElement("a");
+      link.className = "link";
+      link.href = url;
+      link.textContent = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
 
-        try {
-          await navigator.clipboard.writeText(fullText);
-          button.textContent = "تم النسخ";
-        } catch {
-          alert("تعذر النسخ تلقائياً. انسخ النص يدوياً.");
-        }
+      const actions = document.createElement("div");
+      actions.className = "actions";
+
+      const copyButton = document.createElement("button");
+      copyButton.textContent = "نسخ الإعلان";
+      copyButton.onclick = () => {
+        const fullText = [
+          title, content, tags.textContent,
+          disclosure, "رابط الشراء: " + url
+        ].filter(Boolean).join("\n\n");
+
+        navigator.clipboard.writeText(fullText)
+          .then(() => showMessage("تم نسخ الإعلان."))
+          .catch(() => showMessage("تعذر النسخ، حدد النص وانسخه يدوياً.", true));
       };
 
-      article.append(title, copy, tags, link, button);
-      container.appendChild(article);
+      actions.appendChild(copyButton);
+      card.append(heading, paragraph, tags, disclosureText, link, actions);
+      results.appendChild(card);
     });
 
-    document.getElementById("results").hidden = false;
-    status.textContent = "تم إنشاء الإعلانات. راجعها قبل النشر.";
+    showMessage("تم إنشاء الإعلانات بنجاح.");
+
   } catch (error) {
-    status.textContent = error.message;
+    showMessage(error.message || "حدث خطأ أثناء الاتصال بالخادم.", true);
   } finally {
     button.disabled = false;
+    button.textContent = "إنشاء 3 إعلانات سعودية";
   }
+}
+
+function showMessage(message, isError = false) {
+  const element = document.getElementById("message");
+  element.textContent = message;
+  element.className = isError ? "message error" : "message";
 }
 </script>
 </body>
-    </html>
+      </html>
+                                       

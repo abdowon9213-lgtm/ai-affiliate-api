@@ -99,8 +99,21 @@ def generate_ads(data: GenerateRequest):
 
         variants = result.get("variants", [])
 
-        if len(variants) != 3:
-            raise ValueError("عدد الإعلانات غير صحيح")
+        if not isinstance(variants, list):
+            raise ValueError("Invalid variants format")
+
+        # تصفية الإعلانات للتأكد من صحتها وضمان عدم تعطل النظام
+        variants = [
+            ad for ad in variants
+            if isinstance(ad, dict)
+            and ad.get("content")
+        ]
+
+        if len(variants) < 1:
+            raise ValueError("Groq returned no valid ads")
+
+        # أخذ أول 3 إعلانات متوفرة بسلاسة
+        variants = variants[:3]
 
         for ad in variants:
             ad["affiliate_url"] = data.affiliate_url
@@ -125,4 +138,4 @@ def generate_ads(data: GenerateRequest):
             status_code=502,
             detail="حدث خطأ أثناء إنشاء الإعلان. راجع سجلات الخادم."
 )
-                
+    

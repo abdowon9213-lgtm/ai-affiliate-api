@@ -118,11 +118,11 @@ def generate_ads(data: GenerateRequest):
             "variants": variants
         }
 
-        except Exception as e:
+    except Exception as e:
         import logging
         logging.exception("Groq API error: %s", e)
         raise HTTPException(
             status_code=502,
             detail="حدث خطأ أثناء إنشاء الإعلان. راجع سجلات الخادم."
-        )
-         
+)
+                
